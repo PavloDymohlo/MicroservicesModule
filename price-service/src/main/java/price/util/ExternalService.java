@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum ExternalService {
-    AUTH("http://localhost:8080/auth"),
-    VALIDATE("http://localhost:8080/validate");
+    AUTH("http://localhost:8190/auth"),
+    VALIDATE("http://localhost:8190/validate");
 
     private final String url;
 

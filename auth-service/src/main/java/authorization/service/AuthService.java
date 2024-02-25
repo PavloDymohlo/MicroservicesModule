@@ -28,15 +28,12 @@ public class AuthService {
     }
 
     private String generateToken() {
+        // 1) this token is used for discount, not for authenticate access to services
         return "discount" + System.currentTimeMillis();
     }
 
     public boolean authentication(String userName, String password) {
-        if (userDB.containsKey(userName) && userDB.get(userName).equals(password)) {
-            return true;
-        } else {
-            return false;
-        }
+        return userDB.containsKey(userName) && userDB.get(userName).equals(password);
     }
 
     public boolean verifyToken(String token) {

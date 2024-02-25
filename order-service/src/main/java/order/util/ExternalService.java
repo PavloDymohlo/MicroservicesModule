@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ExternalService {
-    CALCULATE("http://localhost:8082/calculate");
+    CALCULATE("http://localhost:8192/calculate");
 
     private final String url;
 

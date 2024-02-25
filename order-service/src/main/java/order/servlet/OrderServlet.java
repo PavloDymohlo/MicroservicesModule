@@ -1,5 +1,6 @@
 package order.servlet;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
@@ -19,6 +20,7 @@ import order.service.CarService;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 @WebServlet("/order")
 public class OrderServlet extends HttpServlet {
@@ -27,6 +29,7 @@ public class OrderServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        final String error = "how to get problems";
         double distance = Double.parseDouble(req.getParameter("distance"));
         String time = req.getParameter("time");
         String service = req.getParameter("service");
@@ -37,27 +40,36 @@ public class OrderServlet extends HttpServlet {
 
     private void sendToCalculationServer(Order order, HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = formPostRequest(order);
+        HttpResponse response = httpClient.execute(httpPost);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != 200) {
+            resp.sendError(statusCode, "Error occurred during price calculation.");
+            return;
+        }
+        processRequestWithSuccessResponseStatus(order, req, resp, response);
+    }
+
+    private static HttpPost formPostRequest(Order order) throws JsonProcessingException, UnsupportedEncodingException {
         HttpPost httpPost = new HttpPost(ExternalService.CALCULATE.getUrl());
         String jsonOrder = mapper.writeValueAsString(order);
         StringEntity entity = new StringEntity(jsonOrder);
         httpPost.setEntity(entity);
         httpPost.setHeader("Accept", "application/json");
         httpPost.setHeader("Content-type", "application/json");
-        HttpResponse response = httpClient.execute(httpPost);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode == 200) {
-            String priceJson = EntityUtils.toString(response.getEntity());
-            Car nearestCar = carService.nearestCarSimulation(order.getServiceType());
-            String category = nearestCar.getCarCategory().toString();
-            String brand = nearestCar.getModel();
-            req.setAttribute("price", priceJson);
-            req.setAttribute("category", category);
-            req.setAttribute("brand", brand);
-            RequestDispatcher dispatcher = req.getRequestDispatcher("jsp/order.jsp");
-            dispatcher.forward(req, resp);
-        } else {
-            resp.sendError(statusCode, "Error occurred during price calculation.");
-        }
+        return httpPost;
+    }
+
+    private static void processRequestWithSuccessResponseStatus(Order order, HttpServletRequest req, HttpServletResponse resp, HttpResponse response) throws IOException, ServletException {
+        String priceJson = EntityUtils.toString(response.getEntity());
+        Car nearestCar = carService.nearestCarSimulation(order.getServiceType());
+        String category = nearestCar.getCarCategory().toString();
+        String brand = nearestCar.getModel();
+        req.setAttribute("price", priceJson);
+        req.setAttribute("category", category);
+        req.setAttribute("brand", brand);
+        RequestDispatcher dispatcher = req.getRequestDispatcher("jsp/order.jsp");
+        dispatcher.forward(req, resp);
     }
 
     @Override

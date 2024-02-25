@@ -106,16 +106,12 @@ public class PriceService {
 
     private double getDistanceCoefficient(String carCategory) {
         String category = carCategory.toLowerCase();
-        switch (category) {
-            case "economy":
-                return distancePriceByCarCategory.getEconomyKilometer();
-            case "standard":
-                return distancePriceByCarCategory.getStandardKilometer();
-            case "comfort":
-                return distancePriceByCarCategory.getComfortKilometer();
-            default:
-                throw new IllegalArgumentException("Invalid car category: " + carCategory);
-        }
+        return switch (category) {
+            case "economy" -> distancePriceByCarCategory.getEconomyKilometer();
+            case "standard" -> distancePriceByCarCategory.getStandardKilometer();
+            case "comfort" -> distancePriceByCarCategory.getComfortKilometer();
+            default -> throw new IllegalArgumentException("Invalid car category: " + carCategory);
+        };
     }
 
     private boolean isValidToken(String token) {
